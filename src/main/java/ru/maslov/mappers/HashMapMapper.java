@@ -8,7 +8,7 @@ import java.util.List;
 
 public class HashMapMapper {
 
-    public HashMap<Long, List<String>> map(List<Record> records) {
+    public static HashMap<Long, List<String>> map(List<Record> records) {
         HashMap<Long, List<String>> map = new HashMap<>();
         for (Record record : records) {
             map.putIfAbsent(record.getId(), new LinkedList<>());

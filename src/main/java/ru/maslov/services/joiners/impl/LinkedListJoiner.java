@@ -7,65 +7,60 @@ import ru.maslov.services.joiners.Joiner;
 
 import java.io.IOException;
 import java.io.Writer;
-import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
+import java.util.ListIterator;
 
-public class LinkedListJoiner implements Joiner {
+public class LinkedListJoiner extends Joiner<LinkedList<Record>> {
     private LinkedList<Record> leftTable;
     private LinkedList<Record> rightTable;
 
-    public LinkedListJoiner(LinkedList<Record> leftTable, LinkedList<Record> rightTable) {
-        this.leftTable = leftTable;
-        this.rightTable = rightTable;
+    public LinkedListJoiner() {}
+
+    public LinkedListJoiner(Printer printer, Writer writer) {
+        super(printer, writer);
     }
 
     @Override
-    public void join(Printer printer, Writer writer) throws IOException {
-        int aStartPointer = 0;
-        int bStartPointer = 0;
-        int bEndPointer = 0;
-        long prevAid = leftTable.get(aStartPointer).getId();
+    public void join(LinkedList<Record> leftTable, LinkedList<Record> rightTable) throws IOException {
+        ListIterator<Record> leftIterator = leftTable.listIterator();
+        ListIterator<Record> rightIterator = rightTable.listIterator();
 
-        while (aStartPointer < leftTable.size() && bStartPointer < rightTable.size()) {
-            if (leftTable.get(aStartPointer).getId() < rightTable.get(bStartPointer).getId()) {
-                aStartPointer++;
-                continue;
+        if (!leftIterator.hasNext() || !rightIterator.hasNext()) {
+            return;
+        }
+        int stepsBack = 1;
+        Record left, right;
+
+        while (leftIterator.hasNext()) {
+            left = leftIterator.next();
+            while (rightIterator.hasNext()) {
+                right = rightIterator.next();
+                if (left.getId() < right.getId()) {
+                    stepBack(rightIterator, stepsBack);
+                    stepsBack = 1;
+                    break;
+                } else if (left.getId() == right.getId()) {
+                    getPrinter().print(
+                            new ResultRecord(left.getId(),
+                                    left.getValue(),
+                                    right.getValue()),
+                            getWriter()
+                    );
+                    stepsBack++;
+                }
             }
-
-            if (leftTable.get(aStartPointer).getId() > rightTable.get(bStartPointer).getId()) {
-                bStartPointer++;
-                continue;
-            }
-
-            if (prevAid != leftTable.get(aStartPointer).getId()) {
-                prevAid = leftTable.get(aStartPointer).getId();
-                bEndPointer = findNextWithOtherId(rightTable, bStartPointer, leftTable.get(aStartPointer).getId());
-
-            }
-
-            for (int i = bStartPointer; i < bEndPointer; i++) {
-                ResultRecord record = new ResultRecord(leftTable.get(aStartPointer).getId(),
-                        leftTable.get(aStartPointer).getValue(),
-                        rightTable.get(i).getValue());
-                printer.print(record, writer);
-            }
-
-            aStartPointer++;
-
+            stepBack(rightIterator, stepsBack);
+            stepsBack = 1;
         }
     }
 
-    private int findNextWithOtherId(List<Record> list, int startInd, long currentId) {
-        int resultInd = startInd + 1;
-        Iterator<Record> iterator = list.listIterator(resultInd);
-        while (iterator.hasNext()) {
-            if (iterator.next().getId() != currentId) {
-                break;
+    private void stepBack(ListIterator<Record> iterator, int stepsBack) {
+        for (int i = 0; i < stepsBack; i++) {
+            if (iterator.hasPrevious()) {
+                iterator.previous();
             } else {
-                resultInd++;
+                break;
             }
         }
-        return resultInd;
     }
 }

@@ -11,12 +11,12 @@ import java.io.Writer;
  */
 public class FormatPrinterImpl implements Printer {
 
-    private static final String FORMAT_OUTPUT = "%-25d %-110.100s %-110.100s"
+    private static final String FORMAT_OUTPUT = "%-25d %-25.100s %-25.100s"
             + System.getProperty("line.separator");
 
     @Override
     public void initPrint(Writer w) throws IOException {
-        w.write(String.format("%-25s %-110s %-110s" + System.getProperty("line.separator"),
+        w.write(String.format("%-25s %-25s %-25s" + System.getProperty("line.separator"),
                 "ID", "A.VALUE", "B.VALUE"));
     }
 

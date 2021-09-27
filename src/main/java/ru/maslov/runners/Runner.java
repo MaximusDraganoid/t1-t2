@@ -1,48 +1,44 @@
 package ru.maslov.runners;
 
 import ru.maslov.entities.Record;
-import ru.maslov.io.printers.impl.FormatPrinterImpl;
 import ru.maslov.io.printers.Printer;
-import ru.maslov.io.scanners.impl.FileScanner;
+import ru.maslov.io.printers.impl.FormatPrinterImpl;
 import ru.maslov.io.scanners.Scanner;
+import ru.maslov.io.scanners.impl.FileScanner;
+import ru.maslov.mappers.ArrayListToLinkedListMapper;
 import ru.maslov.mappers.HashMapMapper;
-import ru.maslov.services.FileInnerJoinServiceImpl;
+import ru.maslov.services.joiners.JoinerService;
 import ru.maslov.services.joiners.impl.ArrayListJoiner;
 import ru.maslov.services.joiners.impl.HashMapJoiner;
 import ru.maslov.services.joiners.impl.LinkedListJoiner;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
 
 public class Runner {
-    private static final String ARRAY_LIST_OUTPUT_NAME = "src"
+
+    private static final String STARTING_CALCULUS_MESSAGE = "Проводим вычисления для ";
+    private static final String FINISH_CALCULUS_MESSAGE = System.getProperty("line.separator")
+            + "Вычисления окончены!"
+            + System.getProperty("line.separator");
+
+    private static final String BASE_PATH = "src"
             + File.separator +
             "main" +
             File.separator +
             "resources" +
-            File.separator +
-            "array_list.txt";
-    private static final String LINKED_LIST_OUTPUT_NAME = "src"
-            + File.separator +
-            "main" +
-            File.separator +
-            "resources" +
-            File.separator +
-            "linked_list.txt";
-    private static final String HASH_MAP_OUTPUT_NAME = "src"
-            + File.separator +
-            "main" +
-            File.separator +
-            "resources" +
-            File.separator +
-            "hash_map.txt";
+            File.separator;
+
+    private static final String ARRAY_LIST_OUTPUT_NAME = "array_list.txt";
+    private static final String LINKED_LIST_OUTPUT_NAME = "linked_list.txt";
+    private static final String HASH_MAP_OUTPUT_NAME = "hash_map.txt";
 
     public static void main(String[] args) {
         validationInputParameters(args);
-
-        //todo: валидация данных
-        //todo: получение параметров изкомандной строки
 
         System.out.println("Считывание данных и инициализация значений, необходимых для вычилений...");
         Scanner scannerForA = new FileScanner(args[0]);
@@ -51,40 +47,36 @@ public class Runner {
         Scanner scannerForB = new FileScanner(args[1]);
         ArrayList<Record> recordsB = scannerForB.scanRecords();
 
-        ArrayListJoiner arrayListJoiner = new ArrayListJoiner(recordsA, recordsB);
+        LinkedList<Record> aLink = ArrayListToLinkedListMapper.map(recordsA);
+        LinkedList<Record> bLink = ArrayListToLinkedListMapper.map(recordsB);
 
-        LinkedList<Record> aLink = new LinkedList<>(recordsA);
-        aLink.sort(Comparator.comparingLong(Record::getId));
-
-        LinkedList<Record> bLink = new LinkedList<>(recordsB);
-        bLink.sort(Comparator.comparingLong(Record::getId));
-
-        LinkedListJoiner linkedListJoiner = new LinkedListJoiner(aLink, bLink);
-
-        HashMapMapper mapper = new HashMapMapper();
-        Map<Long, List<String>> mapForA = mapper.map(aLink);
-        Map<Long, List<String>> mapForB = mapper.map(bLink);
-
-        HashMapJoiner hashMapJoiner = new HashMapJoiner(mapForA, mapForB);
+        Map<Long, List<String>> mapForA = HashMapMapper.map(aLink);
+        Map<Long, List<String>> mapForB = HashMapMapper.map(bLink);
 
         Printer printer = new FormatPrinterImpl();
-        FileInnerJoinServiceImpl joinService = new FileInnerJoinServiceImpl(printer);
 
         System.out.println("Приступаем к вычислениям...");
-        System.out.println("Проводим вычисления для ArrayList");
-        joinService.innerJoin(arrayListJoiner, ARRAY_LIST_OUTPUT_NAME);
+        System.out.println(STARTING_CALCULUS_MESSAGE + "ArrayList");
+        JoinerService.innerJoin(recordsA,
+                recordsB,
+                BASE_PATH + ARRAY_LIST_OUTPUT_NAME,
+                new ArrayListJoiner());
 
-        System.out.println("Вычисления окончены! "
-                + System.getProperty("line.separator")
-                + "Проводим вычисления для LinkedList");
-        joinService.innerJoin(linkedListJoiner, LINKED_LIST_OUTPUT_NAME);
+        System.out.println(FINISH_CALCULUS_MESSAGE
+                + STARTING_CALCULUS_MESSAGE + "LinkedList");
+        JoinerService.innerJoin(aLink,
+                bLink,
+                BASE_PATH + LINKED_LIST_OUTPUT_NAME,
+                new LinkedListJoiner());
 
-        System.out.println("Вычисления окончены!"
-                + System.getProperty("line.separator")
-                + "Проводим вычисления для HashMap");
-        joinService.innerJoin(hashMapJoiner, HASH_MAP_OUTPUT_NAME);
+        System.out.println(FINISH_CALCULUS_MESSAGE
+                + STARTING_CALCULUS_MESSAGE + "HashMap");
+        JoinerService.innerJoin(mapForA,
+                mapForB,
+                BASE_PATH + HASH_MAP_OUTPUT_NAME,
+                new HashMapJoiner());
 
-        System.out.println("Вычисления окончены! Ознакомьтесь с результатами вычислений");
+        System.out.println(FINISH_CALCULUS_MESSAGE);
     }
 
     private static void validationInputParameters(String[] args) {

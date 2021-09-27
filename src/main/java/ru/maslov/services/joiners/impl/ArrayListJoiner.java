@@ -9,24 +9,23 @@ import java.io.IOException;
 import java.io.Writer;
 import java.util.ArrayList;
 
-public class ArrayListJoiner implements Joiner {
-    private ArrayList<Record> leftTable;
-    private ArrayList<Record> rightTable;
+public class ArrayListJoiner extends Joiner<ArrayList<Record>> {
 
-    public ArrayListJoiner(ArrayList<Record> leftTable, ArrayList<Record> rightTable) {
-        this.leftTable = leftTable;
-        this.rightTable = rightTable;
+    public ArrayListJoiner() {}
+
+    public ArrayListJoiner(Printer printer, Writer writer) {
+        super(printer, writer);
     }
 
     @Override
-    public void join(Printer printer, Writer writer) throws IOException {
+    public void join(ArrayList<Record> leftTable, ArrayList<Record> rightTable) throws IOException {
         for (Record recordFromA : leftTable) {
             for (Record recordFromB : rightTable) {
                 if (recordFromA.getId() == recordFromB.getId()) {
                     ResultRecord resultRecord = new ResultRecord(recordFromA.getId(),
                             recordFromA.getValue(),
                             recordFromB.getValue());
-                    printer.print(resultRecord, writer);
+                    getPrinter().print(resultRecord, getWriter());
                 }
             }
         }
